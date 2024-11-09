@@ -1,128 +1,218 @@
 /* globals jQuery, $, waitForKeyElements */
 
-import {
-  STREAMER_DROPS_CONTAINER_ID,
-  DROP_ID,
-  GENERIC_DROPS_CONTAINER_ID,
-} from "./constants";
+import { GenericDrop, StreamerDrop } from "./types";
+import { getGenericDrops, getStreamerDrops } from "./util";
 
-type GenericDrop = {
-  name: string;
-  watchTime: string;
-  videoEl: HTMLVideoElement;
-};
+let allDrops = [...getGenericDrops(), ...getStreamerDrops()];
+const totalDropCount = allDrops.length;
 
-interface StreamerDrop extends GenericDrop {
-  streamerNames: string[];
-}
+const STORAGE_KEY = "ER_DROPS";
 
 function main() {
   injectMenu();
 
-  const genericDrops = getGenericDrops();
+  insertCheckmarks();
 
-  console.log(genericDrops);
+  attachListeners();
 
-  for (let i = 0; i < genericDrops.length; i++) {
-    const link = $(genericDrops[i].videoEl).closest("a");
-    $(link).on("click", { value: genericDrops[i] }, (e) => {
+  initFromSaveData();
+
+  updateDropUI();
+}
+
+main();
+
+function initFromSaveData() {
+  const saveData = loadProgress();
+  if (saveData === null) {
+    console.log("🚀 ~ initFromSaveData ~ saveData:", saveData);
+    return;
+  }
+
+  // Create a mapping of `name` to `completed` from localStorageDrops
+  const localStorageMap = new Map<string, boolean>();
+  saveData.forEach((drop) => {
+    localStorageMap.set(drop.name, drop.completed);
+  });
+
+  // Update the `completed` field in onLoadDrops based on localStorage data
+  allDrops = allDrops.map((drop) => {
+    // If a matching name is found in localStorage, update `completed`
+    const updatedCompleted = localStorageMap.get(drop.name);
+
+    return {
+      ...drop, // Keep all other fields the same
+      completed:
+        updatedCompleted !== undefined ? updatedCompleted : drop.completed, // Override `completed` if found in localStorage
+    };
+  });
+
+  console.log("🚀 ~ initFromSaveData ~ allDrops:", allDrops);
+
+  allDrops.forEach((drop) => markDrop(drop));
+}
+
+function attachListeners() {
+  for (let i = 0; i < allDrops.length; i++) {
+    const link = $(allDrops[i].domElement);
+    $(link).on("click", function (e) {
       if (!e.shiftKey) {
         return;
       }
 
       e.preventDefault();
 
-      console.log(e.data.value);
+      const dropName = $(this).find(".drop-type").text();
+      const drop = allDrops.find((d) => d.name === dropName);
+      if (drop === undefined) return;
+
+      console.log(drop);
+
+      drop.completed = !drop.completed;
+
+      console.log(drop);
+
+      markDrop(drop);
+
+      saveProgress();
     });
   }
-
-  //   $(genericDrops).each(function (_, value) {
-  //     const link = $(value.videoEl).closest("a");
-  //     $(link).on("click", { value: value }, (e) => {
-  //       if (!e.shiftKey) {
-  //         return;
-  //       }
-
-  //       e.preventDefault();
-
-  //       console.log(e.data.value);
-  //     });
-  //   });
-
-  // const streamerDrops = getStreamerDrops();
-  // $(streamerDrops).each((_, value) => {
-  //   const link = $(value.videoEl).closest("a");
-  //   $(link).on("click", { value: value }, (e) => {
-  //     e.preventDefault();
-
-  //     console.log(e.data.value);
-  //   });
-  // });
 }
 
-main();
+function markDrop(drop: GenericDrop) {
+  const checkmark = $(drop.domElement).find("#er_checkmark");
+  const targetScale = drop.completed ? 1 : 0;
+  $(checkmark).css({ transform: `scale(${targetScale})` });
+  updateDropUI();
+}
+
+function resetDrop(drop: GenericDrop | StreamerDrop) {
+  drop.completed = false;
+
+  const link = $(drop.domElement);
+  const checkmark = $(link).find("#er_checkmark");
+  $(checkmark).css({ transform: `scale(0)` });
+
+  updateDropUI();
+}
+
+function updateDropUI() {
+  let streamerCount = 0;
+  let genericCount = 0;
+
+  let completedStreamerCount = 0;
+  let completedGenericCount = 0;
+
+  allDrops.forEach((drop) => {
+    if ("streamerNames" in drop) {
+      streamerCount++;
+      if (drop.completed) {
+        completedStreamerCount++;
+      }
+    } else {
+      genericCount++;
+      if (drop.completed) {
+        completedGenericCount++;
+      }
+    }
+  });
+
+  $("#er_menu #er_dropcountgeneric").text(
+    `${completedGenericCount} / ${genericCount}`
+  );
+
+  $("#er_menu #er_dropcountstreamer").text(
+    `${completedStreamerCount} / ${streamerCount}`
+  );
+
+  $("#er_menu #er_dropcounttotal").text(
+    `${completedStreamerCount + completedGenericCount} / ${totalDropCount}`
+  );
+}
 
 function injectMenu() {
   const $hero = $(".hero");
 
   const html = `
-          <div class="section">
-              <div class="container">
-                  <button id="er_reset">Reset</button>
-  
-                  <p>[Shift + Left click] to mark drop as completed</p>
-              </div>
-          </div>
+        <div id="er_menu" class="section">
+            <div class="container" style="padding: 1rem 0; display: flex; gap: 1rem; align-items: center; min-height: 200px; justify-content: stretch;">
+                <div style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; flex-grow: 1;">
+                    <div style="display: flex; flex-direction: column; gap: .4rem;">
+                        <div style="display: flex; align-items: center; justify-content: stretch; gap: 1rem;">
+                            <p style="flex-grow: 1; text-align: end;">Generic:</p>
+                            <span id="er_dropcountgeneric" style="text-align: center;">x / x</span>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: stretch; gap: 1rem;">
+                            <p style="flex-grow: 1;  text-align: end;">Streamer:</p>
+                            <span id="er_dropcountstreamer" style="text-align: center;">x / x</span>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: stretch; gap: 1rem;">
+                            <p style="flex-grow: 1;  text-align: end;">All:</p>
+                            <span id="er_dropcounttotal" style="text-align: center;">x / x</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: .4rem; flex-grow: 1;">
+                    <p>[Shift + Left click] To mark drop as completed</p>
+
+                    <div style="display: flex; gap: .4rem; align-items: center; justify-content: stretch; width: 100%">
+                        <button id="er_reset" class="button is-primary" style="align-self: auto; flex-grow: 1;">Reset</button>
+                        <button id="er_clearcache" class="button is-outline" style="align-self: auto; flex-grow: 1;">Clear cache</button>
+                    </div>
+                </div>
+            </div>
+        </div>
       `;
 
   $hero.after(html);
+
+  $("#er_reset").on("click", resetAll);
+  $("#er_clearcache").on("click", clearCache);
 }
 
-function getStreamerDrops() {
-  // Init return value
-  const drops: StreamerDrop[] = [];
-
-  // Find all drop elements
-  const streamerDrops = $(`${STREAMER_DROPS_CONTAINER_ID} ${DROP_ID}`);
-
-  // Fill array
-  $(streamerDrops).each(function () {
-    const drop = <StreamerDrop>{};
-    drop.streamerNames = [];
-
-    drop.name = $(this).find(".drop-type").text();
-    drop.watchTime = $(this).find(".drop-time > span").text();
-    drop.videoEl = $(this).find("video")[0];
-
-    $(this)
-      .find(".streamer-name")
-      .each((_, val) => {
-        drop.streamerNames.push($(val).text());
-      });
-
-    drops.push(drop);
+function resetAll() {
+  allDrops.forEach((value) => {
+    resetDrop(value);
   });
 
-  return drops;
+  clearCache();
 }
 
-function getGenericDrops() {
-  // Init return value
-  const drops: GenericDrop[] = [];
+function clearCache() {
+  localStorage.removeItem(STORAGE_KEY);
+}
 
-  // Find all drop elements
-  const genericDrops = $(`${GENERIC_DROPS_CONTAINER_ID} ${DROP_ID}`);
+function saveProgress() {
+  const saveFriendly = allDrops.map((drop) => ({
+    ...drop,
+    domElement: null,
+  }));
 
-  // Fill array
-  $(genericDrops).each(function () {
-    const drop = <GenericDrop>{};
+  console.log("🚀 ~ saveFriendly ~ saveFriendly:", saveFriendly);
 
-    drop.name = $(this).find(".drop-type").text();
-    drop.watchTime = $(this).find(".drop-time > span").text();
-    drop.videoEl = $(this).find("video")[0];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saveFriendly));
+}
 
-    drops.push(drop);
+function loadProgress(): GenericDrop[] | null {
+  const rawData = localStorage.getItem(STORAGE_KEY);
+  return rawData === null
+    ? null
+    : JSON.parse(localStorage.getItem(STORAGE_KEY) as string);
+}
+
+function checkMark() {
+  return `
+    <svg id="er_checkmark" style="z-index: 99; color: lime; transform: scale(0); transition: transform .2s ease;" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="128" height="128" fill="currentColor" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" d="M12 2c-.791 0-1.55.314-2.11.874l-.893.893a.985.985 0 0 1-.696.288H7.04A2.984 2.984 0 0 0 4.055 7.04v1.262a.986.986 0 0 1-.288.696l-.893.893a2.984 2.984 0 0 0 0 4.22l.893.893a.985.985 0 0 1 .288.696v1.262a2.984 2.984 0 0 0 2.984 2.984h1.262c.261 0 .512.104.696.288l.893.893a2.984 2.984 0 0 0 4.22 0l.893-.893a.985.985 0 0 1 .696-.288h1.262a2.984 2.984 0 0 0 2.984-2.984V15.7c0-.261.104-.512.288-.696l.893-.893a2.984 2.984 0 0 0 0-4.22l-.893-.893a.985.985 0 0 1-.288-.696V7.04a2.984 2.984 0 0 0-2.984-2.984h-1.262a.985.985 0 0 1-.696-.288l-.893-.893A2.984 2.984 0 0 0 12 2Zm3.683 7.73a1 1 0 1 0-1.414-1.413l-4.253 4.253-1.277-1.277a1 1 0 0 0-1.415 1.414l1.985 1.984a1 1 0 0 0 1.414 0l4.96-4.96Z" clip-rule="evenodd"/>
+    </svg>
+  `;
+}
+
+function insertCheckmarks() {
+  $(".drop-box-body").each(function () {
+    $(this).append(checkMark());
   });
-
-  return drops;
 }
