@@ -5,7 +5,12 @@ export type GenericDrop = {
   completed: boolean;
 };
 
+export type Streamer = {
+  name: string;
+  url: string;
+  online: boolean;
+};
+
 export interface StreamerDrop extends GenericDrop {
-  streamerNames: string[];
-  streamerLinks: string[];
+  streamers: Streamer[];
 }
