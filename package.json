@@ -38,7 +38,9 @@
     "require-template": "https://cdn.jsdelivr.net/npm/${dependencyName}@${dependencyVersion}",
     "namespace": "http://tampermonkey.net/",
     "license": "https://opensource.org/licenses/MIT",
-    "match": "https://twitch.facepunch.com/",
+    "match": [
+      "https://twitch.facepunch.com/"
+    ],
     "require": [
       "https://code.jquery.com/jquery-3.7.1.min.js"
     ],
