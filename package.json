@@ -22,7 +22,6 @@
   "homepage": "https://github.com/ERisberg/rust-drops-marker#readme",
   "devDependencies": {
     "@types/node": "^22.9.0",
-    "@types/prettier": "^3.0.0",
     "@types/tampermonkey": "^5.0.3",
     "@types/webpack": "^5.28.5",
     "prettier": "^3.3.3",
@@ -39,7 +38,9 @@
     "namespace": "http://tampermonkey.net/",
     "license": "https://opensource.org/licenses/MIT",
     "match": "https://twitch.facepunch.com/",
-    "require": ["https://code.jquery.com/jquery-3.7.1.min.js"],
+    "require": [
+      "https://code.jquery.com/jquery-3.7.1.min.js"
+    ],
     "exclude": [],
     "resources": [],
     "keyedResources": {}
