@@ -3,7 +3,7 @@ import {
   DROP_ID,
   GENERIC_DROPS_CONTAINER_ID,
 } from "./constants";
-import { StreamerDrop, GenericDrop } from "./types";
+import { StreamerDrop, GenericDrop, Streamer } from "./types";
 
 export function getStreamerDrops() {
   // Init return value
@@ -15,8 +15,7 @@ export function getStreamerDrops() {
   // Fill array
   $(streamerDrops).each(function () {
     const drop = <StreamerDrop>{};
-    drop.streamerNames = [];
-    drop.streamerLinks = [];
+    drop.streamers = [];
 
     drop.name = $(this).find(".drop-type").text();
     drop.watchTime = $(this).find(".drop-time > span").text();
@@ -26,20 +25,18 @@ export function getStreamerDrops() {
     $(this)
       .find(".streamer-info")
       .each((_, val) => {
-        const streamLink = $(val).attr("href");
-        if (streamLink) {
-          drop.streamerLinks.push(streamLink);
-        }
-      });
+        const streamer = <Streamer>{
+          online: $(val).find(".online-status").length > 0,
+          url: $(val).attr("href") ?? "",
+          name: $(val).find(".streamer-name").text(),
+        };
 
-    $(this)
-      .find(".streamer-name")
-      .each((_, val) => {
-        drop.streamerNames.push($(val).text());
+        drop.streamers.push(streamer);
       });
-
     drops.push(drop);
   });
+
+  console.log("🚀 ~ getStreamerDrops ~ drops:", drops);
 
   return drops;
 }
