@@ -86,7 +86,7 @@ function markDrop(drop: GenericDrop) {
   updateDropUI();
 }
 
-function resetDrop(drop: GenericDrop | StreamerDrop) {
+function resetDrop(drop: GenericDrop) {
   drop.completed = false;
 
   const link = $(drop.domElement);
@@ -104,7 +104,7 @@ function updateDropUI() {
   let completedGenericCount = 0;
 
   allDrops.forEach((drop) => {
-    if ("streamerNames" in drop) {
+    if ("streamers" in drop) {
       streamerCount++;
       if (drop.completed) {
         completedStreamerCount++;
@@ -158,9 +158,27 @@ function injectMenu() {
                 <div style="display: flex; flex-direction: column; gap: .4rem; flex-grow: 1;">
                     <p>[Shift + Left click] To mark drop as completed</p>
 
-                    <div style="display: flex; gap: .4rem; align-items: center; justify-content: stretch; width: 100%">
-                        <button id="er_reset" class="button is-primary" style="align-self: auto; flex-grow: 1;">Reset</button>
-                        <button id="er_clearcache" class="button is-outline" style="align-self: auto; flex-grow: 1;">Clear cache</button>
+                    <div style="display: flex; flex-direction: column; gap: .4rem;">
+                        <div style="display: flex; gap: .4rem; align-items: center; justify-content: stretch; width: 100%">
+                            <button id="er_reset" class="button is-primary" style="align-self: auto; flex-grow: 1;">Reset</button>
+                            <button id="er_clearcache" class="button is-outline" style="align-self: auto; flex-grow: 1;">Clear cache</button>
+                        </div>
+
+                        <div style="display: flex; gap: .4rem; align-items: center; justify-content: stretch; width: 100%">
+                            <button id="er_openstreams" class="button twitch" style="align-self: auto; flex-grow: 1;">
+                                <span style="padding-right: .6rem; width: 32px; height: 32px; display: inline-block;">
+                                    <?xml version="1.0" ?><svg fill="none" style="width:100%; height:100%;" height="24px" width="24px" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg"><path d="M10 6H6C4.89543 6 4 6.89543 4 8V18C4 19.1046 4.89543 20 6 20H16C17.1046 20 18 19.1046 18 18V14M14 4H20M20 4V10M20 4L10 14" stroke="#efebe0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                                </span>
+                                Open remaining (online)
+                            </button>
+
+                             <button id="er_openstreamsalt" class="button twitch" style="align-self: auto; flex-grow: 1;">
+                                <span style="padding-right: .6rem; width: 32px; height: 32px; display: inline-block;">
+                                    <?xml version="1.0" ?><svg fill="none" style="width:100%; height:100%;" height="24px" width="24px" viewBox="0 0 24 24"  xmlns="http://www.w3.org/2000/svg"><path d="M10 6H6C4.89543 6 4 6.89543 4 8V18C4 19.1046 4.89543 20 6 20H16C17.1046 20 18 19.1046 18 18V14M14 4H20M20 4V10M20 4L10 14" stroke="#efebe0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                                </span>
+                                Open remaining (all)
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,6 +189,8 @@ function injectMenu() {
 
   $("#er_reset").on("click", resetAll);
   $("#er_clearcache").on("click", clearCache);
+  $("#er_openstreams").on("click", () => openRemainingStreams(true));
+  $("#er_openstreamsalt").on("click", () => openRemainingStreams(false));
 }
 
 function resetAll() {
@@ -183,6 +203,31 @@ function resetAll() {
 
 function clearCache() {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+function openRemainingStreams(onlineOnly: boolean) {
+  let streamers = [];
+
+  if (onlineOnly) {
+    streamers = allDrops
+      .filter(
+        (drop): drop is StreamerDrop => "streamers" in drop && !drop.completed
+      ) // Only StreamerDrops and not completed
+      .flatMap((drop) => drop.streamers) // Flatten streamers arrays
+      .filter((streamer) => streamer.online); // Filter only online streamers
+  } else {
+    streamers = allDrops
+      .filter(
+        (drop): drop is StreamerDrop => "streamers" in drop && !drop.completed
+      ) // Only StreamerDrops that are not completed
+      .flatMap((drop) => drop.streamers); // Flatten streamers arrays
+  }
+
+  if (streamers.length === 0) return;
+
+  streamers.forEach((s) => {
+    window.open(s.url, "_blank");
+  });
 }
 
 function saveProgress() {
