@@ -87,16 +87,6 @@ function markDrop(drop: Drop) {
   updateDropUI();
 }
 
-function resetDrop(drop: Drop) {
-  drop.completed = false;
-
-  const link = $(drop.domElement);
-  const checkmark = $(link).find("#er_checkmark");
-  $(checkmark).css({ transform: `scale(0)` });
-
-  updateDropUI();
-}
-
 function updateDropUI() {
   let streamerCount = 0;
   let genericCount = 0;
@@ -132,11 +122,12 @@ function updateDropUI() {
 }
 
 export function resetAll() {
-  allDrops.forEach((value) => {
-    resetDrop(value);
-  });
+  // allDrops.forEach((value) => {
+  //   resetDrop(value);
+  // });
 
   clearCache();
+  window.location.reload();
 }
 
 export function openRemainingStreams(onlineOnly: boolean) {
