@@ -2,8 +2,9 @@ import {
   STREAMER_DROPS_CONTAINER_ID,
   DROP_ID,
   GENERIC_DROPS_CONTAINER_ID,
+  STORAGE_KEY,
 } from "./constants";
-import { StreamerDrop, GenericDrop, Streamer } from "./types";
+import { StreamerDrop, Drop, Streamer } from "./types";
 
 export function getStreamerDrops() {
   // Init return value
@@ -43,14 +44,14 @@ export function getStreamerDrops() {
 
 export function getGenericDrops() {
   // Init return value
-  const drops: GenericDrop[] = [];
+  const drops: Drop[] = [];
 
   // Find all drop elements
   const genericDrops = $(`${GENERIC_DROPS_CONTAINER_ID} ${DROP_ID}`);
 
   // Fill array
   $(genericDrops).each(function () {
-    const drop = <GenericDrop>{};
+    const drop = <Drop>{};
 
     drop.name = $(this).find(".drop-type").text();
     drop.watchTime = $(this).find(".drop-time > span").text();
@@ -61,4 +62,26 @@ export function getGenericDrops() {
   });
 
   return drops;
+}
+
+export function saveProgress(data: Drop[]) {
+  const saveFriendly = data.map((drop) => ({
+    ...drop,
+    domElement: null,
+  }));
+
+  console.log("🚀 ~ saveFriendly ~ saveFriendly:", saveFriendly);
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(saveFriendly));
+}
+
+export function clearCache() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+export function loadProgress(): Drop[] | null {
+  const rawData = localStorage.getItem(STORAGE_KEY);
+  return rawData === null
+    ? null
+    : JSON.parse(localStorage.getItem(STORAGE_KEY) as string);
 }

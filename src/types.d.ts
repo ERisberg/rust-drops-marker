@@ -1,4 +1,4 @@
-export type GenericDrop = {
+export type Drop = {
   name: string;
   watchTime: string;
   domElement: HTMLElement;
@@ -11,6 +11,6 @@ export type Streamer = {
   online: boolean;
 };
 
-export interface StreamerDrop extends GenericDrop {
+export interface StreamerDrop extends Drop {
   streamers: Streamer[];
 }
