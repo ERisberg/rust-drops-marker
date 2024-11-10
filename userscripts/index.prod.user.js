@@ -5,6 +5,8 @@
 // @description Marker rust twitch drops as completed
 // @author erisberg
 // @homepage https://github.com/ERisberg/rust-drops-marker#readme
+// @updateURL https://github.com/ERisberg/rust-drops-marker/raw/refs/heads/main/userscripts/index.prod.user.js
+// @downloadURL https://github.com/ERisberg/rust-drops-marker/raw/refs/heads/main/userscripts/index.prod.user.js
 // @license https://opensource.org/licenses/MIT
 // @match https://twitch.facepunch.com/
 // @require https://code.jquery.com/jquery-3.7.1.min.js

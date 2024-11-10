@@ -46,6 +46,8 @@
     ],
     "exclude": [],
     "resources": [],
-    "keyedResources": {}
+    "keyedResources": {},
+    "downloadURL": "https://github.com/ERisberg/rust-drops-marker/raw/refs/heads/main/userscripts/index.prod.user.js",
+    "updateURL": "https://github.com/ERisberg/rust-drops-marker/raw/refs/heads/main/userscripts/index.prod.user.js"
   }
 }
