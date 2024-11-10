@@ -1,6 +1,6 @@
 {
   "name": "rust-drops-marker",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Marker rust twitch drops as completed",
   "main": "userscript/index.user.js",
   "scripts": {
