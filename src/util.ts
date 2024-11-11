@@ -34,12 +34,30 @@ export function getStreamerDrops() {
 
         drop.streamers.push(streamer);
       });
+
+    drop.uid = generateHashId(
+      drop.name.toLowerCase(),
+      ...drop.streamers.map((streamer) => streamer.name.toLowerCase())
+    );
+
     drops.push(drop);
   });
 
   console.log("🚀 ~ getStreamerDrops ~ drops:", drops);
 
   return drops;
+}
+
+export function generateHashId(...strings: string[]): string {
+  const combinedString = strings.join("|"); // Combine strings with a separator
+  let hash = 5381;
+
+  for (let i = 0; i < combinedString.length; i++) {
+    hash = (hash * 33) ^ combinedString.charCodeAt(i);
+  }
+
+  // Convert to a positive 32-bit integer and then to a string
+  return (hash >>> 0).toString(16);
 }
 
 export function getGenericDrops() {
@@ -57,6 +75,10 @@ export function getGenericDrops() {
     drop.watchTime = $(this).find(".drop-time > span").text();
     drop.domElement = this;
     drop.completed = false;
+    drop.uid = generateHashId(
+      drop.name.toLowerCase(),
+      drop.watchTime.toLowerCase()
+    );
 
     drops.push(drop);
   });

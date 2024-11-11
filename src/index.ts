@@ -5,6 +5,7 @@ import { injectMenu } from "./menu/menu";
 import { Drop, StreamerDrop } from "./types";
 import {
   clearCache,
+  generateHashId,
   getGenericDrops,
   getStreamerDrops,
   loadProgress,
@@ -13,6 +14,8 @@ import {
 
 let allDrops = [...getGenericDrops(), ...getStreamerDrops()];
 const totalDropCount = allDrops.length;
+
+// TODO: create uuid for each drop
 
 function main() {
   injectMenu();
@@ -33,13 +36,13 @@ function initFromSaveData(saveData: Drop[]) {
   // Create a mapping of `name` to `completed` from localStorageDrops
   const localStorageMap = new Map<string, boolean>();
   saveData.forEach((drop) => {
-    localStorageMap.set(drop.name, drop.completed);
+    localStorageMap.set(drop.uid, drop.completed);
   });
 
   // Update the `completed` field in onLoadDrops based on localStorage data
   allDrops = allDrops.map((drop) => {
     // If a matching name is found in localStorage, update `completed`
-    const updatedCompleted = localStorageMap.get(drop.name);
+    const updatedCompleted = localStorageMap.get(drop.uid);
 
     return {
       ...drop, // Keep all other fields the same
@@ -64,7 +67,32 @@ function attachListeners() {
       e.preventDefault();
 
       const dropName = $(this).find(".drop-type").text();
-      const drop = allDrops.find((d) => d.name === dropName);
+      const isStreamerDrop = $(this).find(".streamer-name").length > 0;
+      let dropUID = "";
+
+      if (isStreamerDrop) {
+        const streamerNames: string[] = [];
+
+        $(this)
+          .find(".streamer-info")
+          .each((_, val) => {
+            const name = $(val).find(".streamer-name").text();
+            if (name !== "") {
+              streamerNames.push(name.toLowerCase());
+            }
+          });
+
+        dropUID = generateHashId(dropName.toLowerCase(), ...streamerNames);
+      } else {
+        const watchTime = $(this).find(".drop-time > span").text();
+        dropUID = generateHashId(
+          dropName.toLowerCase(),
+          watchTime.toLowerCase()
+        );
+      }
+
+      const drop = allDrops.find((d) => d.uid === dropUID);
+
       if (drop === undefined) return;
 
       console.log(drop);

@@ -66,10 +66,10 @@ main();
 function initFromSaveData(saveData) {
     const localStorageMap = new Map();
     saveData.forEach((drop) => {
-        localStorageMap.set(drop.name, drop.completed);
+        localStorageMap.set(drop.uid, drop.completed);
     });
     allDrops = allDrops.map((drop) => {
-        const updatedCompleted = localStorageMap.get(drop.name);
+        const updatedCompleted = localStorageMap.get(drop.uid);
         return Object.assign(Object.assign({}, drop), { completed: updatedCompleted !== undefined ? updatedCompleted : drop.completed });
     });
     console.log("🚀 ~ initFromSaveData ~ allDrops:", allDrops);
@@ -84,7 +84,25 @@ function attachListeners() {
             }
             e.preventDefault();
             const dropName = $(this).find(".drop-type").text();
-            const drop = allDrops.find((d) => d.name === dropName);
+            const isStreamerDrop = $(this).find(".streamer-name").length > 0;
+            let dropUID = "";
+            if (isStreamerDrop) {
+                const streamerNames = [];
+                $(this)
+                    .find(".streamer-info")
+                    .each((_, val) => {
+                    const name = $(val).find(".streamer-name").text();
+                    if (name !== "") {
+                        streamerNames.push(name.toLowerCase());
+                    }
+                });
+                dropUID = (0, util_1.generateHashId)(dropName.toLowerCase(), ...streamerNames);
+            }
+            else {
+                const watchTime = $(this).find(".drop-time > span").text();
+                dropUID = (0, util_1.generateHashId)(dropName.toLowerCase(), watchTime.toLowerCase());
+            }
+            const drop = allDrops.find((d) => d.uid === dropUID);
             if (drop === undefined)
                 return;
             console.log(drop);
@@ -269,6 +287,7 @@ function getStyleString(style) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getStreamerDrops = getStreamerDrops;
+exports.generateHashId = generateHashId;
 exports.getGenericDrops = getGenericDrops;
 exports.saveProgress = saveProgress;
 exports.clearCache = clearCache;
@@ -295,10 +314,19 @@ function getStreamerDrops() {
             };
             drop.streamers.push(streamer);
         });
+        drop.uid = generateHashId(drop.name.toLowerCase(), ...drop.streamers.map((streamer) => streamer.name.toLowerCase()));
         drops.push(drop);
     });
     console.log("🚀 ~ getStreamerDrops ~ drops:", drops);
     return drops;
+}
+function generateHashId(...strings) {
+    const combinedString = strings.join("|");
+    let hash = 5381;
+    for (let i = 0; i < combinedString.length; i++) {
+        hash = (hash * 33) ^ combinedString.charCodeAt(i);
+    }
+    return (hash >>> 0).toString(16);
 }
 function getGenericDrops() {
     const drops = [];
@@ -309,6 +337,7 @@ function getGenericDrops() {
         drop.watchTime = $(this).find(".drop-time > span").text();
         drop.domElement = this;
         drop.completed = false;
+        drop.uid = generateHashId(drop.name.toLowerCase(), drop.watchTime.toLowerCase());
         drops.push(drop);
     });
     return drops;

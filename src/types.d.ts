@@ -1,4 +1,5 @@
 export type Drop = {
+  uid: string;
   name: string;
   watchTime: string;
   domElement: HTMLElement;
