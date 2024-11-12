@@ -15,8 +15,6 @@ import {
 let allDrops = [...getGenericDrops(), ...getStreamerDrops()];
 const totalDropCount = allDrops.length;
 
-// TODO: create uuid for each drop
-
 function main() {
   injectMenu();
   injectCheckmarks();
@@ -150,10 +148,6 @@ function updateDropUI() {
 }
 
 export function resetAll() {
-  // allDrops.forEach((value) => {
-  //   resetDrop(value);
-  // });
-
   clearCache();
   window.location.reload();
 }
@@ -175,8 +169,6 @@ export function openRemainingStreams(onlineOnly: boolean) {
       ) // Only StreamerDrops that are not completed
       .flatMap((drop) => drop.streamers); // Flatten streamers arrays
   }
-
-  if (streamers.length === 0) return;
 
   streamers.forEach((s) => {
     window.open(s.url, "_blank");
